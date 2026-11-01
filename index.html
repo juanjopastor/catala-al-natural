@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="ca">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta
+      name="description"
+      content="Cerca paraules als subtítols de català al natural i troba el moment exacte del vídeo."
+    >
+    <title>català al natural — Cerca de subtítols</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    >
+    <link rel="stylesheet" href="styles.css">
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="wordmark" href="./" aria-label="català al natural, inici">
+        <span class="wordmark-icon" aria-hidden="true">c.</span>
+        <span>català<span class="wordmark-light"> al natural</span></span>
+      </a>
+      <span class="topbar-note"><span class="status-dot"></span> Cerca de subtítols</span>
+    </header>
+
+    <main>
+      <section class="search-hero" aria-label="Cerca subtítols">
+        <div class="hero-copy">
+          <p class="eyebrow"><span class="eyebrow-line"></span> PRONÚNCIA EN CATALÀ</p>
+          <p class="hero-description">
+            Cerca una paraula o una frase i ves directament al moment del vídeo.
+          </p>
+
+          <form id="search-form" class="search-form" role="search">
+            <label class="visually-hidden" for="search-input">Paraula o frase que vols cercar</label>
+            <span class="search-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none">
+                <circle cx="10.8" cy="10.8" r="6.8"></circle>
+                <path d="m16 16 4.2 4.2"></path>
+              </svg>
+            </span>
+            <input
+              id="search-input"
+              name="q"
+              type="search"
+              placeholder="Prova «bon dia» o «llengua»"
+              autocomplete="off"
+              required
+            >
+            <button type="submit">
+              Cerca
+              <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                <path d="M4 10h11m-4-4 4 4-4 4"></path>
+              </svg>
+            </button>
+          </form>
+          <p class="search-hint">Cerca paraules i frases completes.</p>
+        </div>
+
+        <div class="hero-art" aria-hidden="true">
+          <div class="art-orbit orbit-one"></div>
+          <div class="art-orbit orbit-two"></div>
+          <div class="art-spark spark-one"></div>
+          <div class="art-spark spark-two"></div>
+          <div class="soundwave">
+            <span></span><span></span><span></span><span></span><span></span>
+            <span></span><span></span><span></span><span></span><span></span>
+            <span></span><span></span><span></span><span></span><span></span>
+            <span></span><span></span><span></span><span></span>
+          </div>
+          <div class="caption-card">
+            <span class="caption-label"><span></span> PRONÚNCIA</span>
+            <p>Pronuncia <em>bé.</em></p>
+            <div class="caption-card-footer">
+              <span>català · 00:42</span>
+              <span class="play-icon">▶</span>
+            </div>
+          </div>
+          <div class="art-caption">Escolta i practica.</div>
+        </div>
+      </section>
+
+      <section class="results-section" aria-labelledby="results-heading">
+        <div class="results-heading-row">
+          <div>
+            <p class="eyebrow results-eyebrow">Cerca als vídeos</p>
+            <h2 id="results-heading">Resultats <span id="results-count"></span></h2>
+          </div>
+          <p class="results-note">Escolta i practica català.</p>
+        </div>
+        <p id="search-status" class="search-status" role="status" aria-live="polite">
+          Escriu una paraula o una frase per començar.
+        </p>
+        <ol id="results-list" class="results-list" aria-label="Resultats de la cerca"></ol>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <span>català al natural</span>
+      <span>Fet amb paraules i curiositat <span aria-hidden="true">✳</span></span>
+    </footer>
+  </body>
+</html>
