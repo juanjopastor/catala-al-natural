@@ -1,49 +1,70 @@
 # catala-al-natural
 
-## Generar el índice de subtítulos
+## Generate the subtitle index
 
-El script `build_data.py` procesa los archivos `.vtt` del directorio `data` y
-genera `data.json` en la raíz del proyecto:
+The `build_data.py` script processes the `.vtt` files in the `data` directory
+and generates `catala-al-natural.json` in the project root:
 
 ```powershell
 python build_data.py
 ```
 
-También se pueden indicar otras rutas:
+You can specify different input and output paths:
 
 ```powershell
-python build_data.py --input-dir ruta\a\subtitulos --output ruta\a\data.json
+python build_data.py --input-dir path\to\subtitles --output path\to\channel.json
 ```
 
-El JSON contiene una entrada por subtítulo, con estos campos:
+The JSON contains one entry per subtitle, with the following fields:
 
-- `videoId`: ID del vídeo de YouTube extraído del nombre del archivo.
-- `title`: título extraído del nombre del archivo.
-- `start`: instante de inicio en segundos.
-- `text`: texto del subtítulo, sin etiquetas WebVTT.
-- `processedText`: texto en minúsculas y sin puntuación, salvo apóstrofos,
-  guiones y el punto volado de `l·l`. Incluye también el texto procesado del
-  subtítulo siguiente para permitir búsquedas de frases que cruzan subtítulos.
-- `nextSubOffset`: longitud, en unidades UTF-16 como las que usa JavaScript,
-  del texto procesado del subtítulo actual. Una coincidencia solo pertenece a
-  esta entrada si su índice inicial en `processedText` es menor que este valor.
+- `videoId`: YouTube video ID extracted from the file name.
+- `title`: title extracted from the file name.
+- `start`: start time in seconds.
+- `text`: subtitle text without WebVTT tags.
+- `processedText`: lowercase text without punctuation, except apostrophes,
+  hyphens, and the middle dot in `l·l`. It also includes the processed text
+  from the next subtitle to support phrase searches across subtitles.
+- `nextSubOffset`: length of the current subtitle's processed text in UTF-16
+  code units, as used by JavaScript. A match belongs to this entry only if its
+  starting index in `processedText` is less than this value.
 
-Para validar el script:
+Run the tests with:
 
 ```powershell
 python -m unittest
 ```
 
-## Usar el buscador web
+## Use the web search
 
-Genera primero `data.json` si todavía no existe y luego sirve el proyecto desde
-la raíz del repositorio:
+Generate `catala-al-natural.json` if it does not exist, then serve the project
+from the repository root:
 
 ```powershell
 python build_data.py
 python -m http.server 8000
 ```
 
-Abre `http://localhost:8000` en el navegador. El índice se carga al hacer la
-primera búsqueda; no abras `index.html` directamente como archivo, porque el
-navegador no permite cargar `data.json` de esa forma.
+Open `http://localhost:8000` in your browser. The selected channel's index is
+loaded on the first search. Do not open `index.html` directly as a file, since
+the browser will not allow the page to load the JSON files that way.
+Results are displayed 20 per page.
+
+## Channels
+
+The `channels.json` file defines the available channels. Each entry in
+`channels` has a display name (`name`) and a path to its index (`file`):
+
+```json
+{
+  "channels": [
+    {
+      "name": "català al natural",
+      "file": "catala-al-natural.json"
+    }
+  ]
+}
+```
+
+To add a channel, create its JSON index and add an entry to `channels`. The
+selector lets users switch channels, and each index is loaded the first time
+they search that channel.

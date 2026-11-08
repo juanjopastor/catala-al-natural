@@ -130,10 +130,10 @@ def build_index(input_dir: Path) -> list[dict[str, str | float | int]]:
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Genera data.json a partir de archivos de subtítulos WebVTT."
+        description="Genera un índice JSON a partir de archivos de subtítulos WebVTT."
     )
     parser.add_argument("--input-dir", type=Path, default=Path("data"))
-    parser.add_argument("--output", type=Path, default=Path("data.json"))
+    parser.add_argument("--output", type=Path, default=Path("catala-al-natural.json"))
     args = parser.parse_args()
 
     if not args.input_dir.is_dir():

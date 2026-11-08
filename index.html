@@ -50,7 +50,7 @@
               autocomplete="off"
               required
             >
-            <button type="submit">
+            <button type="submit" disabled>
               Cerca
               <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
                 <path d="M4 10h11m-4-4 4 4-4 4"></path>
@@ -60,7 +60,7 @@
           <p class="search-hint">Cerca paraules i frases completes.</p>
         </div>
 
-        <div class="hero-art" aria-hidden="true">
+        <div class="hero-art">
           <div class="art-orbit orbit-one"></div>
           <div class="art-orbit orbit-two"></div>
           <div class="art-spark spark-one"></div>
@@ -72,11 +72,16 @@
             <span></span><span></span><span></span><span></span>
           </div>
           <div class="caption-card">
-            <span class="caption-label"><span></span> PRONÚNCIA</span>
-            <p>Pronuncia <em>bé.</em></p>
+            <label class="caption-label" for="channel-select">
+              <span></span> TRIA UN CANAL
+            </label>
+            <p>Cerca en el teu <em>canal.</em></p>
+            <select id="channel-select" name="channel" disabled>
+              <option value="">Carregant canals…</option>
+            </select>
             <div class="caption-card-footer">
-              <span>català · 00:42</span>
-              <span class="play-icon">▶</span>
+              <span>Canvia de canal quan vulguis</span>
+              <span class="channel-indicator" aria-hidden="true"></span>
             </div>
           </div>
           <div class="art-caption">Escolta i practica.</div>
@@ -95,6 +100,16 @@
           Escriu una paraula o una frase per començar.
         </p>
         <ol id="results-list" class="results-list" aria-label="Resultats de la cerca"></ol>
+        <nav
+          id="results-pagination"
+          class="results-pagination"
+          aria-label="Paginació dels resultats"
+          hidden
+        >
+          <button id="previous-page" class="pagination-button" type="button">Anterior</button>
+          <span id="page-indicator" aria-live="polite"></span>
+          <button id="next-page" class="pagination-button" type="button">Següent</button>
+        </nav>
       </section>
     </main>
 
