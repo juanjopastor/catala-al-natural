@@ -3,15 +3,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from build_data import build_index, normalize_text, parse_vtt, process_subtitle_file
-
-
-class NormalizeTextTests(unittest.TestCase):
-    def test_removes_symbols_and_preserves_catalan_apostrophes_and_hyphens(self):
-        self.assertEqual(
-            normalize_text("L’avi va—lent; l·lengua &amp; bé!"),
-            "l'avi va-lent l·lengua amp bé",
-        )
+from build_data import build_index, parse_vtt, process_subtitle_file
 
 
 class ParseVttTests(unittest.TestCase):
@@ -25,10 +17,10 @@ class ParseVttTests(unittest.TestCase):
             "Adéu.\n"
         )
 
-        self.assertEqual(cues[0]["start"], 1.25)
-        self.assertEqual(cues[0]["text"], "Bon dia a tothom & amics")
-        self.assertEqual(cues[0]["processedText"], "bon dia a tothom amics")
-        self.assertEqual(cues[1]["start"], 2.5)
+        self.assertEqual(cues[0]["s"], 1.25)
+        self.assertEqual(cues[0]["t"], "Bon dia a tothom & amics")
+        self.assertNotIn("processedText", cues[0])
+        self.assertEqual(cues[1]["s"], 2.5)
 
 
 class ProcessSubtitleFileTests(unittest.TestCase):
@@ -46,23 +38,15 @@ class ProcessSubtitleFileTests(unittest.TestCase):
 
             video = process_subtitle_file(path)
 
-        self.assertEqual(video["videoId"], "Abcdefghijk")
-        self.assertEqual(video["title"], "Vídeo d'aprenentatge")
-        subtitles = video["subtitles"]
+        self.assertEqual(video["i"], "Abcdefghijk")
+        self.assertEqual(video["t"], "Vídeo d'aprenentatge")
+        subtitles = video["s"]
         self.assertEqual(len(subtitles), 2)
-        self.assertNotIn("videoId", subtitles[0])
-        self.assertNotIn("title", subtitles[0])
-        self.assertEqual(subtitles[0]["start"], 1.0)
-        self.assertEqual(subtitles[0]["text"], "L’avi va—lent, l·lengua")
-        self.assertEqual(
-            subtitles[0]["processedText"],
-            "l'avi va-lent l·lengua segona part",
-        )
-        self.assertEqual(
-            subtitles[0]["nextSubOffset"],
-            len("l'avi va-lent l·lengua"),
-        )
-        self.assertEqual(subtitles[1]["processedText"], "segona part")
+        self.assertEqual(set(subtitles[0]), {"s", "t"})
+        self.assertEqual(subtitles[0]["s"], 1.0)
+        self.assertEqual(subtitles[0]["t"], "L’avi va—lent, l·lengua")
+        self.assertNotIn("processedText", subtitles[0])
+        self.assertNotIn("nextSubOffset", subtitles[0])
 
     def test_build_index_combines_subtitle_files(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -74,10 +58,10 @@ class ProcessSubtitleFileTests(unittest.TestCase):
 
             index = build_index(input_dir)
 
-        self.assertEqual(len(index["videos"]), 1)
-        self.assertEqual(index["videos"][0]["subtitles"][0]["processedText"], "hola")
+        self.assertEqual(len(index["v"]), 1)
+        self.assertEqual(index["v"][0]["s"][0]["t"], "Hola")
         serialized = json.loads(json.dumps(index))
-        self.assertEqual(serialized["videos"][0]["videoId"], "Abcdefghijk")
+        self.assertEqual(serialized["v"][0]["i"], "Abcdefghijk")
 
 
 if __name__ == "__main__":

@@ -19,16 +19,14 @@ The JSON groups subtitles by video, so each video ID and title is stored once:
 
 ```json
 {
-  "videos": [
+  "v": [
     {
-      "videoId": "Abcdefghijk",
-      "title": "Video title",
-      "subtitles": [
+      "i": "Abcdefghijk",
+      "t": "Video title",
+      "s": [
         {
-          "start": 1.25,
-          "text": "Subtitle text",
-          "processedText": "subtitle text next cue",
-          "nextSubOffset": 13
+          "s": 1.25,
+          "t": "Subtitle text"
         }
       ]
     }
@@ -36,20 +34,19 @@ The JSON groups subtitles by video, so each video ID and title is stored once:
 }
 ```
 
-Each video has a `videoId`, a `title`, and a `subtitles` array. Each subtitle
+The compact fields are `v` (videos), `i` (video ID), `t` (title), and `s`
+(subtitles on a video; start time in seconds on a subtitle). Each subtitle
 contains:
 
-- `start`: start time in seconds.
-- `text`: subtitle text without WebVTT tags.
-- `processedText`: lowercase text without punctuation, except apostrophes,
-  hyphens, and the middle dot in `l·l`. It also includes the processed text
-  from the next subtitle to support phrase searches across subtitles.
-- `nextSubOffset`: length of the current subtitle's processed text in UTF-16
-  code units, as used by JavaScript. A match belongs to this entry only if its
-  starting index in `processedText` is less than this value.
+- `s`: start time in seconds.
+- `t`: subtitle text without WebVTT tags.
 
-Existing flat indexes are still supported. Regenerate them with
-`build_data.py` to remove repeated video metadata and reduce their file size.
+The browser also accepts existing indexes using the previous descriptive field
+names.
+
+The browser generates the normalized search text and subtitle-boundary offsets
+in memory when a channel index is first loaded. They are reused for subsequent
+searches and are not stored in the JSON file.
 
 Run the tests with:
 

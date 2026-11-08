@@ -2,7 +2,6 @@ import argparse
 import html
 import json
 import re
-import unicodedata
 from pathlib import Path
 
 
@@ -12,9 +11,8 @@ TIMESTAMP_PATTERN = re.compile(
     r"(?:\d{2}:)?\d{2}:\d{2}\.\d{3}(?:\s+.*)?$"
 )
 TAG_PATTERN = re.compile(r"<[^>]*>")
-APOSTROPHES = {"'", "\u2018", "\u2019", "\u02bc", "\uff07"}
 
-SubtitleRecord = dict[str, str | float | int]
+SubtitleRecord = dict[str, str | float]
 VideoIndex = dict[str, str | list[SubtitleRecord]]
 
 
@@ -34,33 +32,7 @@ def clean_caption_text(text: str) -> str:
     return " ".join(text.split())
 
 
-def normalize_text(text: str) -> str:
-    text = unicodedata.normalize("NFC", text)
-    normalized = []
-
-    for index, character in enumerate(text):
-        category = unicodedata.category(character)
-        if character in APOSTROPHES:
-            normalized.append("'")
-        elif category == "Pd":
-            normalized.append("-")
-        elif (
-            character == "\u00b7"
-            and index > 0
-            and index + 1 < len(text)
-            and text[index - 1].casefold() == "l"
-            and text[index + 1].casefold() == "l"
-        ):
-            normalized.append(character)
-        elif category[0] in {"L", "N", "M"}:
-            normalized.append(character)
-        else:
-            normalized.append(" ")
-
-    return " ".join("".join(normalized).casefold().split())
-
-
-def parse_vtt(content: str) -> list[dict[str, str | float]]:
+def parse_vtt(content: str) -> list[SubtitleRecord]:
     cues = []
     lines = content.lstrip("\ufeff").splitlines()
 
@@ -81,9 +53,8 @@ def parse_vtt(content: str) -> list[dict[str, str | float]]:
         if text:
             cues.append(
                 {
-                    "start": timestamp_to_seconds(match.group(1)),
-                    "text": text,
-                    "processedText": normalize_text(text),
+                    "s": timestamp_to_seconds(match.group(1)),
+                    "t": text,
                 }
             )
 
@@ -102,23 +73,10 @@ def process_subtitle_file(path: Path) -> VideoIndex:
         raise ValueError(f"No se encontró un título en el nombre: {path.name}")
 
     cues = parse_vtt(path.read_text(encoding="utf-8-sig"))
-    subtitles = []
-    for index, cue in enumerate(cues):
-        next_text = cues[index + 1]["processedText"] if index + 1 < len(cues) else ""
-        current_text = cue["processedText"]
-        processed_text = f"{current_text} {next_text}".strip()
-        subtitles.append(
-            {
-                "start": cue["start"],
-                "text": cue["text"],
-                "processedText": processed_text,
-                "nextSubOffset": len(current_text.encode("utf-16-le")) // 2,
-            }
-        )
     return {
-        "videoId": video_match.group(1),
-        "title": title,
-        "subtitles": subtitles,
+        "i": video_match.group(1),
+        "t": title,
+        "s": cues,
     }
 
 
@@ -130,7 +88,7 @@ def build_index(input_dir: Path) -> dict[str, list[VideoIndex]]:
     videos = []
     for path in subtitle_files:
         videos.append(process_subtitle_file(path))
-    return {"videos": videos}
+    return {"v": videos}
 
 
 def main() -> None:
@@ -153,10 +111,10 @@ def main() -> None:
     except (OSError, ValueError) as error:
         parser.error(str(error))
 
-    subtitle_count = sum(len(video["subtitles"]) for video in records["videos"])
+    subtitle_count = sum(len(video["s"]) for video in records["v"])
     print(
         f"Generated {subtitle_count} subtitle records across "
-        f"{len(records['videos'])} videos in {args.output}"
+        f"{len(records['v'])} videos in {args.output}"
     )
 
 

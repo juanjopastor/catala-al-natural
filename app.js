@@ -92,13 +92,83 @@ function loadRecords(file) {
         throw new Error(`No s'ha pogut carregar ${file} (HTTP ${response.status}).`);
       }
       return response.json();
-    }).catch((error) => {
+    }).then(prepareVideoGroups).catch((error) => {
       recordsPromises.delete(file);
       throw error;
     });
     recordsPromises.set(file, recordsPromise);
   }
   return recordsPromises.get(file);
+}
+
+function prepareVideoGroups(data) {
+  if (Array.isArray(data)) {
+    return data;
+  }
+
+  if (data && typeof data === "object" && Array.isArray(data.v)) {
+    if (
+      !data.v.every(
+        (video) =>
+          video &&
+          typeof video.i === "string" &&
+          typeof video.t === "string" &&
+          Array.isArray(video.s) &&
+          video.s.every((subtitle) => subtitle && typeof subtitle.t === "string"),
+      )
+    ) {
+      throw new Error("El fitxer de dades no té un format vàlid.");
+    }
+
+    data.videos = data.v;
+    delete data.v;
+
+    for (const video of data.videos) {
+      video.videoId = video.i;
+      video.title = video.t;
+      video.subtitles = video.s;
+      delete video.i;
+      delete video.t;
+      delete video.s;
+
+      for (const subtitle of video.subtitles) {
+        subtitle.start = subtitle.s;
+        subtitle.text = subtitle.t;
+        delete subtitle.s;
+        delete subtitle.t;
+      }
+    }
+  }
+
+  if (
+    !data ||
+    typeof data !== "object" ||
+    !Array.isArray(data.videos) ||
+    !data.videos.every(
+      (video) =>
+        video &&
+        typeof video.videoId === "string" &&
+        typeof video.title === "string" &&
+        Array.isArray(video.subtitles) &&
+        video.subtitles.every((subtitle) => typeof subtitle.text === "string"),
+    )
+  ) {
+    throw new Error("El fitxer de dades no té un format vàlid.");
+  }
+
+  for (const video of data.videos) {
+    const normalizedTexts = video.subtitles.map((subtitle) =>
+      normalizeText(subtitle.text),
+    );
+    for (let index = 0; index < video.subtitles.length; index += 1) {
+      const currentText = normalizedTexts[index];
+      const nextText = normalizedTexts[index + 1] || "";
+      video.subtitles[index].processedText = `${currentText} ${nextText}`.trim();
+      video.subtitles[index].nextSubOffset = currentText.length;
+    }
+  }
+
+  return data;
 }
 
 function* iterateVideoGroups(data) {
@@ -113,18 +183,7 @@ function* iterateVideoGroups(data) {
     return;
   }
 
-  if (
-    data &&
-    typeof data === "object" &&
-    Array.isArray(data.videos) &&
-    data.videos.every(
-      (video) =>
-        video &&
-        typeof video.videoId === "string" &&
-        typeof video.title === "string" &&
-        Array.isArray(video.subtitles),
-    )
-  ) {
+  if (data && typeof data === "object" && Array.isArray(data.videos)) {
     yield* data.videos;
     return;
   }
