@@ -12,10 +12,11 @@ const localJsonInput = document.querySelector("#local-json-input");
 const searchButton = searchForm.querySelector('button[type="submit"]');
 const resultsCount = document.querySelector("#results-count");
 const resultsList = document.querySelector("#results-list");
-const resultsPagination = document.querySelector("#results-pagination");
-const previousPageButton = document.querySelector("#previous-page");
-const nextPageButton = document.querySelector("#next-page");
-const pageIndicator = document.querySelector("#page-indicator");
+const resultsPaginations = document.querySelectorAll(".results-pagination");
+const previousPageButtons = document.querySelectorAll(".previous-page-button");
+const nextPageButtons = document.querySelectorAll(".next-page-button");
+const pageIndicators = document.querySelectorAll(".page-indicator");
+const resultsHeading = document.querySelector("#results-heading");
 
 let channels = [];
 const recordsPromises = new Map();
@@ -277,7 +278,9 @@ function renderResults() {
     ...pageMatches.map(({ subtitle, video }) => createResult(subtitle, video)),
   );
   resultsCount.textContent = totalMatches > 0 ? `(${totalMatches})` : "";
-  resultsPagination.hidden = totalPages <= 1;
+  for (const pagination of resultsPaginations) {
+    pagination.hidden = totalPages <= 1;
+  }
 
   if (totalMatches === 0) {
     showStatus("No hem trobat aquesta paraula o frase. Prova'n una altra.");
@@ -285,9 +288,15 @@ function renderResults() {
   }
 
   searchStatus.hidden = true;
-  pageIndicator.textContent = `Pàgina ${currentPage} de ${totalPages}`;
-  previousPageButton.disabled = currentPage === 1;
-  nextPageButton.disabled = currentPage === totalPages;
+  for (const indicator of pageIndicators) {
+    indicator.textContent = `Pàgina ${currentPage} de ${totalPages}`;
+  }
+  for (const button of previousPageButtons) {
+    button.disabled = currentPage === 1;
+  }
+  for (const button of nextPageButtons) {
+    button.disabled = currentPage === totalPages;
+  }
 }
 
 searchForm.addEventListener("submit", async (event) => {
@@ -301,7 +310,9 @@ searchForm.addEventListener("submit", async (event) => {
   currentPage = 1;
   resultsList.replaceChildren();
   resultsCount.textContent = "";
-  resultsPagination.hidden = true;
+  for (const pagination of resultsPaginations) {
+    pagination.hidden = true;
+  }
 
   const query = normalizeText(searchInput.value);
   if (!query) {
@@ -372,7 +383,9 @@ channelSelect.addEventListener("change", () => {
   currentPage = 1;
   resultsList.replaceChildren();
   resultsCount.textContent = "";
-  resultsPagination.hidden = true;
+  for (const pagination of resultsPaginations) {
+    pagination.hidden = true;
+  }
   showStatus("Prem «Cerca» per cercar en aquest canal.");
 });
 
@@ -403,7 +416,9 @@ localJsonInput.addEventListener("change", async () => {
     currentPage = 1;
     resultsList.replaceChildren();
     resultsCount.textContent = "";
-    resultsPagination.hidden = true;
+    for (const pagination of resultsPaginations) {
+      pagination.hidden = true;
+    }
     showStatus("Fitxer carregat. Prem «Cerca» per cercar-hi.");
   } catch (error) {
     showStatus(
@@ -415,20 +430,31 @@ localJsonInput.addEventListener("change", async () => {
   }
 });
 
-previousPageButton.addEventListener("click", () => {
-  if (currentPage > 1) {
-    currentPage -= 1;
-    renderResults();
-  }
-});
-
-nextPageButton.addEventListener("click", () => {
+function changePage(pageChange, shouldScroll) {
   const totalPages = Math.ceil(matchingRecords.length / RESULTS_PER_PAGE);
-  if (currentPage < totalPages) {
-    currentPage += 1;
-    renderResults();
+  const nextPage = currentPage + pageChange;
+  if (nextPage < 1 || nextPage > totalPages) {
+    return;
   }
-});
+
+  currentPage = nextPage;
+  renderResults();
+  if (shouldScroll) {
+    resultsHeading.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+}
+
+for (const button of previousPageButtons) {
+  button.addEventListener("click", () => {
+    changePage(-1, button.closest(".results-pagination-bottom") !== null);
+  });
+}
+
+for (const button of nextPageButtons) {
+  button.addEventListener("click", () => {
+    changePage(1, button.closest(".results-pagination-bottom") !== null);
+  });
+}
 
 loadChannels().catch((error) => {
   searchButton.disabled = true;

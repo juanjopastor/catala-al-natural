@@ -101,7 +101,19 @@
         <div class="results-heading-row">
           <div>
             <p class="eyebrow results-eyebrow">Cerca als vídeos</p>
-            <h2 id="results-heading">Resultats <span id="results-count"></span></h2>
+            <div class="results-title-row">
+              <h2 id="results-heading">Resultats <span id="results-count"></span></h2>
+              <nav
+                id="results-pagination"
+                class="results-pagination"
+                aria-label="Paginació dels resultats"
+                hidden
+              >
+                <button class="pagination-button previous-page-button" type="button">Anterior</button>
+                <span class="page-indicator" aria-live="polite"></span>
+                <button class="pagination-button next-page-button" type="button">Següent</button>
+              </nav>
+            </div>
           </div>
           <p class="results-note">Escolta i practica català.</p>
         </div>
@@ -110,14 +122,13 @@
         </p>
         <ol id="results-list" class="results-list" aria-label="Resultats de la cerca"></ol>
         <nav
-          id="results-pagination"
-          class="results-pagination"
+          class="results-pagination results-pagination-bottom"
           aria-label="Paginació dels resultats"
           hidden
         >
-          <button id="previous-page" class="pagination-button" type="button">Anterior</button>
-          <span id="page-indicator" aria-live="polite"></span>
-          <button id="next-page" class="pagination-button" type="button">Següent</button>
+          <button class="pagination-button previous-page-button" type="button">Anterior</button>
+          <span class="page-indicator" aria-live="polite"></span>
+          <button class="pagination-button next-page-button" type="button">Següent</button>
         </nav>
       </section>
     </main>
