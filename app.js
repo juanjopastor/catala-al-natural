@@ -55,7 +55,10 @@ function normalizeText(text) {
 }
 
 async function loadChannels() {
-  const response = await fetch(CHANNELS_URL, { priority: "high" });
+  const response = await fetch(CHANNELS_URL, {
+    cache: "no-store",
+    priority: "high",
+  });
   if (!response.ok) {
     throw new Error(`No s'ha pogut carregar la llista de canals (HTTP ${response.status}).`);
   }

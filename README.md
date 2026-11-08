@@ -80,6 +80,10 @@ The `channels.json` file defines the available channels. Each entry in
     {
       "name": "català al natural",
       "file": "catala-al-natural.json"
+    },
+    {
+      "name": "OK CATALÀ",
+      "file": "ok-catala.json"
     }
   ]
 }

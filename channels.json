@@ -1,8 +1,12 @@
 {
   "channels": [
     {
-      "name": "català al natural",
+      "name": "Català al Natural",
       "file": "catala-al-natural.json"
+    },
+    {
+      "name": "OK CATALÀ",
+      "file": "ok-catala.json"
     }
   ]
 }
