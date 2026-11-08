@@ -49,7 +49,7 @@ function normalizeText(text) {
 }
 
 async function loadChannels() {
-  const response = await fetch(CHANNELS_URL);
+  const response = await fetch(CHANNELS_URL, { priority: "high" });
   if (!response.ok) {
     throw new Error(`No s'ha pogut carregar la llista de canals (HTTP ${response.status}).`);
   }
@@ -101,6 +101,37 @@ function loadRecords(file) {
   return recordsPromises.get(file);
 }
 
+function* iterateVideoGroups(data) {
+  if (Array.isArray(data)) {
+    for (const subtitle of data) {
+      yield {
+        videoId: subtitle.videoId,
+        title: subtitle.title,
+        subtitles: [subtitle],
+      };
+    }
+    return;
+  }
+
+  if (
+    data &&
+    typeof data === "object" &&
+    Array.isArray(data.videos) &&
+    data.videos.every(
+      (video) =>
+        video &&
+        typeof video.videoId === "string" &&
+        typeof video.title === "string" &&
+        Array.isArray(video.subtitles),
+    )
+  ) {
+    yield* data.videos;
+    return;
+  }
+
+  throw new Error("El fitxer de dades no té un format vàlid.");
+}
+
 function findMatchIndex(record, query) {
   const searchTerm = ` ${query} `;
   const searchableText = ` ${record.processedText} `;
@@ -126,33 +157,37 @@ function formatTimestamp(seconds) {
   return `${paddedMinutes}:${paddedSeconds}`;
 }
 
-function createResult(record) {
+function createResult(record, video) {
   const item = document.createElement("li");
   item.className = "result-card";
 
-  const title = document.createElement("span");
-  title.className = "result-title";
-  title.textContent = record.title;
-  item.append(title);
-
   const videoLink = document.createElement("a");
-  videoLink.className = "result-timestamp";
-  videoLink.href = `https://www.youtube.com/watch?v=${encodeURIComponent(record.videoId)}&t=${Math.floor(record.start)}s`;
+  videoLink.className = "result-card-link";
+  videoLink.href = `https://www.youtube.com/watch?v=${encodeURIComponent(video.videoId)}&t=${Math.floor(record.start)}s`;
   videoLink.target = "_blank";
   videoLink.rel = "noopener noreferrer";
-  videoLink.setAttribute("aria-label", `Mira el vídeo des de ${formatTimestamp(record.start)}`);
+  videoLink.setAttribute(
+    "aria-label",
+    `Mira ${video.title} des de ${formatTimestamp(record.start)}`,
+  );
 
+  const title = document.createElement("span");
+  title.className = "result-title";
+  title.textContent = video.title;
+
+  const timestamp = document.createElement("span");
+  timestamp.className = "result-timestamp";
   const playIcon = document.createElement("span");
   playIcon.className = "result-play";
   playIcon.setAttribute("aria-hidden", "true");
   playIcon.textContent = "▶";
-  videoLink.append(playIcon, document.createTextNode(formatTimestamp(record.start)));
-  item.append(videoLink);
+  timestamp.append(playIcon, document.createTextNode(formatTimestamp(record.start)));
 
   const caption = document.createElement("p");
   caption.className = "result-text";
   caption.textContent = record.text;
-  item.append(caption);
+  videoLink.append(title, timestamp, caption);
+  item.append(videoLink);
 
   return item;
 }
@@ -169,7 +204,9 @@ function renderResults() {
   const start = (currentPage - 1) * RESULTS_PER_PAGE;
   const pageMatches = matchingRecords.slice(start, start + RESULTS_PER_PAGE);
 
-  resultsList.replaceChildren(...pageMatches.map(createResult));
+  resultsList.replaceChildren(
+    ...pageMatches.map(({ subtitle, video }) => createResult(subtitle, video)),
+  );
   resultsCount.textContent = totalMatches > 0 ? `(${totalMatches})` : "";
   resultsPagination.hidden = totalPages <= 1;
 
@@ -218,9 +255,11 @@ searchForm.addEventListener("submit", async (event) => {
       return;
     }
 
-    for (const record of records) {
-      if (findMatchIndex(record, query) !== -1) {
-        matchingRecords.push(record);
+    for (const video of iterateVideoGroups(records)) {
+      for (const subtitle of video.subtitles) {
+        if (findMatchIndex(subtitle, query) !== -1) {
+          matchingRecords.push({ subtitle, video });
+        }
       }
     }
 
@@ -263,6 +302,9 @@ nextPageButton.addEventListener("click", () => {
 
 loadChannels().catch((error) => {
   searchButton.disabled = true;
+  const option = document.createElement("option");
+  option.textContent = "No s'han pogut carregar els canals";
+  channelSelect.replaceChildren(option);
   showStatus(
     `${error.message} Comprova que ${CHANNELS_URL} és al costat d'aquesta pàgina i obre-la amb un servidor web local, no com un fitxer.`,
     "error",

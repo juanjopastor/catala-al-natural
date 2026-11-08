@@ -1,2 +1,5 @@
 .gitignore
+*.pyc
 data
+catala-al-natural
+generate.bat

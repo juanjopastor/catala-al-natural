@@ -44,22 +44,25 @@ class ProcessSubtitleFileTests(unittest.TestCase):
                 encoding="utf-8",
             )
 
-            records = process_subtitle_file(path)
+            video = process_subtitle_file(path)
 
-        self.assertEqual(len(records), 2)
-        self.assertEqual(records[0]["videoId"], "Abcdefghijk")
-        self.assertEqual(records[0]["title"], "Vídeo d'aprenentatge")
-        self.assertEqual(records[0]["start"], 1.0)
-        self.assertEqual(records[0]["text"], "L’avi va—lent, l·lengua")
+        self.assertEqual(video["videoId"], "Abcdefghijk")
+        self.assertEqual(video["title"], "Vídeo d'aprenentatge")
+        subtitles = video["subtitles"]
+        self.assertEqual(len(subtitles), 2)
+        self.assertNotIn("videoId", subtitles[0])
+        self.assertNotIn("title", subtitles[0])
+        self.assertEqual(subtitles[0]["start"], 1.0)
+        self.assertEqual(subtitles[0]["text"], "L’avi va—lent, l·lengua")
         self.assertEqual(
-            records[0]["processedText"],
+            subtitles[0]["processedText"],
             "l'avi va-lent l·lengua segona part",
         )
         self.assertEqual(
-            records[0]["nextSubOffset"],
+            subtitles[0]["nextSubOffset"],
             len("l'avi va-lent l·lengua"),
         )
-        self.assertEqual(records[1]["processedText"], "segona part")
+        self.assertEqual(subtitles[1]["processedText"], "segona part")
 
     def test_build_index_combines_subtitle_files(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -69,11 +72,12 @@ class ProcessSubtitleFileTests(unittest.TestCase):
                 encoding="utf-8",
             )
 
-            records = build_index(input_dir)
+            index = build_index(input_dir)
 
-        self.assertEqual(len(records), 1)
-        self.assertEqual(records[0]["processedText"], "hola")
-        self.assertEqual(json.loads(json.dumps(records))[0]["videoId"], "Abcdefghijk")
+        self.assertEqual(len(index["videos"]), 1)
+        self.assertEqual(index["videos"][0]["subtitles"][0]["processedText"], "hola")
+        serialized = json.loads(json.dumps(index))
+        self.assertEqual(serialized["videos"][0]["videoId"], "Abcdefghijk")
 
 
 if __name__ == "__main__":

@@ -14,6 +14,9 @@ TIMESTAMP_PATTERN = re.compile(
 TAG_PATTERN = re.compile(r"<[^>]*>")
 APOSTROPHES = {"'", "\u2018", "\u2019", "\u02bc", "\uff07"}
 
+SubtitleRecord = dict[str, str | float | int]
+VideoIndex = dict[str, str | list[SubtitleRecord]]
+
 
 def timestamp_to_seconds(timestamp: str) -> float:
     time_part, milliseconds = timestamp.split(".")
@@ -89,7 +92,7 @@ def parse_vtt(content: str) -> list[dict[str, str | float]]:
     return cues
 
 
-def process_subtitle_file(path: Path) -> list[dict[str, str | float | int]]:
+def process_subtitle_file(path: Path) -> VideoIndex:
     video_match = VIDEO_ID_PATTERN.search(path.name)
     if video_match is None:
         raise ValueError(f"No se encontró un ID de YouTube en el nombre: {path.name}")
@@ -99,38 +102,40 @@ def process_subtitle_file(path: Path) -> list[dict[str, str | float | int]]:
         raise ValueError(f"No se encontró un título en el nombre: {path.name}")
 
     cues = parse_vtt(path.read_text(encoding="utf-8-sig"))
-    records = []
+    subtitles = []
     for index, cue in enumerate(cues):
         next_text = cues[index + 1]["processedText"] if index + 1 < len(cues) else ""
         current_text = cue["processedText"]
         processed_text = f"{current_text} {next_text}".strip()
-        records.append(
+        subtitles.append(
             {
-                "videoId": video_match.group(1),
-                "title": title,
                 "start": cue["start"],
                 "text": cue["text"],
                 "processedText": processed_text,
                 "nextSubOffset": len(current_text.encode("utf-16-le")) // 2,
             }
         )
-    return records
+    return {
+        "videoId": video_match.group(1),
+        "title": title,
+        "subtitles": subtitles,
+    }
 
 
-def build_index(input_dir: Path) -> list[dict[str, str | float | int]]:
+def build_index(input_dir: Path) -> dict[str, list[VideoIndex]]:
     subtitle_files = sorted(input_dir.glob("*.vtt"))
     if not subtitle_files:
         raise ValueError(f"No se encontraron archivos .vtt en {input_dir}")
 
-    records = []
+    videos = []
     for path in subtitle_files:
-        records.extend(process_subtitle_file(path))
-    return records
+        videos.append(process_subtitle_file(path))
+    return {"videos": videos}
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Genera un índice JSON a partir de archivos de subtítulos WebVTT."
+        description="Genera un índice JSON agrupado por vídeo a partir de archivos WebVTT."
     )
     parser.add_argument("--input-dir", type=Path, default=Path("data"))
     parser.add_argument("--output", type=Path, default=Path("catala-al-natural.json"))
@@ -148,7 +153,11 @@ def main() -> None:
     except (OSError, ValueError) as error:
         parser.error(str(error))
 
-    print(f"Generated {len(records)} subtitle records in {args.output}")
+    subtitle_count = sum(len(video["subtitles"]) for video in records["videos"])
+    print(
+        f"Generated {subtitle_count} subtitle records across "
+        f"{len(records['videos'])} videos in {args.output}"
+    )
 
 
 if __name__ == "__main__":

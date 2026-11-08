@@ -15,10 +15,30 @@ You can specify different input and output paths:
 python build_data.py --input-dir path\to\subtitles --output path\to\channel.json
 ```
 
-The JSON contains one entry per subtitle, with the following fields:
+The JSON groups subtitles by video, so each video ID and title is stored once:
 
-- `videoId`: YouTube video ID extracted from the file name.
-- `title`: title extracted from the file name.
+```json
+{
+  "videos": [
+    {
+      "videoId": "Abcdefghijk",
+      "title": "Video title",
+      "subtitles": [
+        {
+          "start": 1.25,
+          "text": "Subtitle text",
+          "processedText": "subtitle text next cue",
+          "nextSubOffset": 13
+        }
+      ]
+    }
+  ]
+}
+```
+
+Each video has a `videoId`, a `title`, and a `subtitles` array. Each subtitle
+contains:
+
 - `start`: start time in seconds.
 - `text`: subtitle text without WebVTT tags.
 - `processedText`: lowercase text without punctuation, except apostrophes,
@@ -27,6 +47,9 @@ The JSON contains one entry per subtitle, with the following fields:
 - `nextSubOffset`: length of the current subtitle's processed text in UTF-16
   code units, as used by JavaScript. A match belongs to this entry only if its
   starting index in `processedText` is less than this value.
+
+Existing flat indexes are still supported. Regenerate them with
+`build_data.py` to remove repeated video metadata and reduce their file size.
 
 Run the tests with:
 
