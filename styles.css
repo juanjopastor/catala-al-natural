@@ -588,6 +588,17 @@ h2 {
   color: #89aa6b;
 }
 
+.footer a {
+  margin-left: 10px;
+  color: #717e73;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.footer a:hover {
+  color: #45692e;
+}
+
 .visually-hidden {
   position: absolute;
   width: 1px;

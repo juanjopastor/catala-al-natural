@@ -85,6 +85,8 @@ The `channels.json` file defines the available channels. Each entry in
 }
 ```
 
-To add a channel, create its JSON index and add an entry to `channels`. The
-selector lets users switch channels, and each index is loaded the first time
-they search that channel.
+To search a local index without adding it to `channels.json`, choose
+**“Carrega un fitxer JSON local…”** in the channel selector and select a `.json`
+file. The file is read in the browser and is not uploaded. To add a permanent
+channel, create its JSON index and add an entry to `channels`. Each configured
+index is loaded the first time users search that channel.

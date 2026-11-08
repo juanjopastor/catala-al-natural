@@ -80,8 +80,16 @@
             <select id="channel-select" name="channel" disabled>
               <option value="">Carregant canals…</option>
             </select>
+            <input
+              id="local-json-input"
+              class="visually-hidden"
+              type="file"
+              accept=".json,application/json"
+              aria-label="Carrega un fitxer JSON local"
+              tabindex="-1"
+            >
             <div class="caption-card-footer">
-              <span>Canvia de canal quan vulguis</span>
+              <span>Canvia de canal o carrega un JSON</span>
               <span class="channel-indicator" aria-hidden="true"></span>
             </div>
           </div>
@@ -116,7 +124,14 @@
 
     <footer class="footer">
       <span>català al natural</span>
-      <span>Fet amb paraules i curiositat <span aria-hidden="true">✳</span></span>
+      <span>
+        Fet amb paraules i curiositat <span aria-hidden="true">✳</span>
+        <a
+          href="https://github.com/juanjopastor/catala-al-natural"
+          target="_blank"
+          rel="noopener noreferrer"
+        >Projecte a GitHub</a>
+      </span>
     </footer>
   </body>
 </html>

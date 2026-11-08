@@ -1,11 +1,14 @@
 const CHANNELS_URL = "./channels.json";
 const RESULTS_PER_PAGE = 20;
+const LOCAL_FILE_ACTION = "__load_local_json__";
+const LOCAL_FILE_VALUE = "__local_json__";
 const APOSTROPHES = new Set(["'", "\u2018", "\u2019", "\u02bc", "\uff07"]);
 const searchForm = document.querySelector("#search-form");
 const searchInput = document.querySelector("#search-input");
 const searchStatus = document.querySelector("#search-status");
 const resultsSection = document.querySelector(".results-section");
 const channelSelect = document.querySelector("#channel-select");
+const localJsonInput = document.querySelector("#local-json-input");
 const searchButton = searchForm.querySelector('button[type="submit"]');
 const resultsCount = document.querySelector("#results-count");
 const resultsList = document.querySelector("#results-list");
@@ -16,6 +19,8 @@ const pageIndicator = document.querySelector("#page-indicator");
 
 let channels = [];
 const recordsPromises = new Map();
+let localRecords = null;
+let previousChannelValue = "";
 let searchGeneration = 0;
 let matchingRecords = [];
 let currentPage = 1;
@@ -81,6 +86,11 @@ async function loadChannels() {
     option.textContent = channel.name;
     channelSelect.append(option);
   }
+  const localFileOption = document.createElement("option");
+  localFileOption.value = LOCAL_FILE_ACTION;
+  localFileOption.textContent = "Carrega un fitxer JSON local…";
+  channelSelect.append(localFileOption);
+  previousChannelValue = channelSelect.value;
   channelSelect.disabled = false;
   searchButton.disabled = false;
 }
@@ -304,12 +314,24 @@ searchForm.addEventListener("submit", async (event) => {
   resultsSection.scrollIntoView({ behavior: "smooth", block: "start" });
 
   try {
-    const selectedChannel = channels.find((channel) => channel.file === channelSelect.value);
-    if (!selectedChannel) {
+    let records;
+    if (channelSelect.value === LOCAL_FILE_VALUE) {
+      if (!localRecords) {
+        throw new Error("Torna a carregar el fitxer JSON local.");
+      }
+      records = localRecords;
+    } else {
+      const selectedChannel = channels.find((channel) => channel.file === channelSelect.value);
+      if (!selectedChannel) {
+        throw new Error("Selecciona un canal vàlid.");
+      }
+      records = await loadRecords(selectedChannel.file);
+    }
+
+    if (!records) {
       throw new Error("Selecciona un canal vàlid.");
     }
 
-    const records = await loadRecords(selectedChannel.file);
     if (generation !== searchGeneration) {
       return;
     }
@@ -327,14 +349,24 @@ searchForm.addEventListener("submit", async (event) => {
     if (generation !== searchGeneration) {
       return;
     }
+    const helpText = channelSelect.value === LOCAL_FILE_VALUE
+      ? ""
+      : ` Comprova la ruta del fitxer a ${CHANNELS_URL} i obre la web amb un servidor local, no com un fitxer.`;
     showStatus(
-      `${error.message} Comprova la ruta del fitxer a ${CHANNELS_URL} i obre la web amb un servidor local, no com un fitxer.`,
+      `${error.message}${helpText}`,
       "error",
     );
   }
 });
 
 channelSelect.addEventListener("change", () => {
+  if (channelSelect.value === LOCAL_FILE_ACTION) {
+    channelSelect.value = previousChannelValue;
+    localJsonInput.click();
+    return;
+  }
+
+  previousChannelValue = channelSelect.value;
   searchGeneration += 1;
   matchingRecords = [];
   currentPage = 1;
@@ -342,6 +374,45 @@ channelSelect.addEventListener("change", () => {
   resultsCount.textContent = "";
   resultsPagination.hidden = true;
   showStatus("Prem «Cerca» per cercar en aquest canal.");
+});
+
+localJsonInput.addEventListener("change", async () => {
+  const file = localJsonInput.files[0];
+  if (!file) {
+    return;
+  }
+
+  try {
+    const records = prepareVideoGroups(JSON.parse(await file.text()));
+    localRecords = records;
+
+    let localOption = channelSelect.querySelector(
+      `option[value="${LOCAL_FILE_VALUE}"]`,
+    );
+    if (!localOption) {
+      localOption = document.createElement("option");
+      localOption.value = LOCAL_FILE_VALUE;
+      channelSelect.insertBefore(localOption, channelSelect.lastElementChild);
+    }
+    localOption.textContent = file.name;
+    channelSelect.value = LOCAL_FILE_VALUE;
+    previousChannelValue = LOCAL_FILE_VALUE;
+
+    searchGeneration += 1;
+    matchingRecords = [];
+    currentPage = 1;
+    resultsList.replaceChildren();
+    resultsCount.textContent = "";
+    resultsPagination.hidden = true;
+    showStatus("Fitxer carregat. Prem «Cerca» per cercar-hi.");
+  } catch (error) {
+    showStatus(
+      `No s'ha pogut carregar el fitxer JSON: ${error.message}`,
+      "error",
+    );
+  } finally {
+    localJsonInput.value = "";
+  }
 });
 
 previousPageButton.addEventListener("click", () => {
